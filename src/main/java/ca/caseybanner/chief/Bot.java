@@ -14,6 +14,8 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -36,6 +38,8 @@ import org.jivesoftware.smackx.muc.MultiUserChat;
  * Created by kcbanner on 7/24/2014.
  */
 public class Bot implements ChatManagerListener, MessageListener, ConnectionListener {
+
+	private static final int COMMAND_TIMEOUT = 1000;
 
 	private static final Logger logger = LogManager.getLogger(Bot.class);
 	
@@ -377,8 +381,11 @@ public class Bot implements ChatManagerListener, MessageListener, ConnectionList
 						response = Optional.of("This is an admin only command. Get out.");
 					} else {
                         try {
-                            response = command.processAsyncMessage(
-                                    fromJID, message.getBody(), matcher, fromRoom).get();
+							response = command.processAsyncMessage(
+									fromJID, message.getBody(), matcher, fromRoom).get(COMMAND_TIMEOUT, TimeUnit.MILLISECONDS);
+						} catch (TimeoutException te) {
+							logger.error("Command timed out " + body, te);
+							return Optional.of("Sorry.  The command " + body + " has timed out.");
                         } catch (ExecutionException | InterruptedException e) {
                             logger.error("Failed to process command: " + body, e);
                             return Optional.empty();

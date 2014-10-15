@@ -56,31 +56,31 @@ public class YggdrasilStatusCommand extends Command {
 
             serviceListMessage.getServices().stream().forEach(service -> {
                 String serviceName = service.getServiceName();
-                result.append(serviceName + ":\n");
-                result.append("\tProviders:\n");
+                result.append("\n" + serviceName + ":\n");
+                result.append("    Providers:\n");
 
                 service.getProviders().forEach(provider -> {
                     String host = provider.getHost();
                     int port = provider.getPort();
                     boolean isOnline = provider.getIsOnline();
 
-                    result.append("\t\t" + host + ":" + port + " (" + (isOnline ? "ONLINE" : "OFFLINE") + "\n");
+                    result.append("        " + host + ":" + port + " (" + (isOnline ? "ONLINE" : "OFFLINE") + ")\n");
                     provider.getProtocols().forEach(protocol -> {
-                        result.append("\t\t\t" + protocol.getName() + "(" + protocol.getProtocolIdHash() + ")\n");
+                        result.append("            " + protocol.getName() + "(" + protocol.getProtocolIdHash() + ")\n");
                     });
                 });
 
-                result.append("\tClients:\n");
+                result.append("    Clients:\n");
                 service.getClients().forEach(client -> {
                     String connectionName = client.getConnectionName();
-                    result.append("\t\t" + connectionName + "\n");
+                    result.append("        " + connectionName + "\n");
 
                     client.getProtocols().forEach(protocol -> {
-                        result.append("\t\t\t" + protocol.getName() + "(" + protocol.getProtocolIdHash() + ")\n");
+                        result.append("            " + protocol.getName() + "(" + protocol.getProtocolIdHash() + ")\n");
                     });
                 });
 
-                result.append("\n---\n\n");
+                result.append("\n---\n");
             });
 
             response.complete(Optional.of(result.toString()));
@@ -88,7 +88,8 @@ public class YggdrasilStatusCommand extends Command {
 
         @Override
         public void linkAdded(BamLink bamLink) {
-
+			ListServicesMessage request = new ListServicesMessage();
+			bamLink.send(request);
         }
 
         @Override
@@ -229,7 +230,7 @@ public class YggdrasilStatusCommand extends Command {
             String serverName = entry.getKey();
             String connectionString = entry.getValue();
 
-            response.append("\t" + serverName + ": " + connectionString + "\n");
+            response.append("    " + serverName + ": " + connectionString + "\n");
         });
 
         return Optional.of(response.toString());
@@ -252,7 +253,6 @@ public class YggdrasilStatusCommand extends Command {
         NettyBamClient bamClient = new NettyBamClient(hostnamePortSplit[0], port);
         bamClient.addProtocol(protocol);
 
-        CompletableFuture<Optional<String>> result = null;
         try {
             bamClient.connect();
         } catch (InterruptedException e) {
