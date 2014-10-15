@@ -140,7 +140,11 @@ public class Bot implements ChatManagerListener, MessageListener, ConnectionList
         Arrays.stream(commandClassnames).forEach(classname -> {
             try {
                 Class clazz = Class.forName(classname);
-                Class[] classes = clazz.getClasses();
+                if (! Command.class.isAssignableFrom(clazz)) {
+					logger.error("Command classname " + classname + " is not a Command!");
+					return;
+				}
+
                 Constructor<Command> cons = clazz.getConstructor(Bot.class);
                 addCommand(bot -> {
                     try {
